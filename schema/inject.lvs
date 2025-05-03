@@ -1,0 +1,8 @@
+#foo: "foo"/"bar"/"baz"
+
+#fooroot: "foo"/#KEY
+
+#injectrule: #foo/#INJECT <= #fooroot
+
+#INJECT: _
+#KEY: "KEY"/_/_/_

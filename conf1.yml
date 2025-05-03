@@ -2,6 +2,10 @@ dv:
   network: /testnet
   router: /testnet/jacob-router-1
   keychain: "insecure"
+  prefix_injection_schema: /home/ubuntu/ndnd-test/schema/inject.tlv
+  prefix_injection_keychain: dir:///home/ubuntu/ndnd-test/ndnd-keys
+  prefix_injection_trust_anchors:
+    - "/foo/KEY/%A58%EE%97QF%9Di/NA/v=1746315379769"
   neighbors:
     - uri: udp4://127.0.0.1:6364
 

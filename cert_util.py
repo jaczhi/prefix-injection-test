@@ -1,14 +1,14 @@
 from ndn.encoding import Name, parse_data
-from ndn.security import Ed25519Signer, TpmFile, KeychainSqlite3
+from ndn.security import Sha256WithEcdsaSigner, TpmFile, KeychainSqlite3
 from typing import Optional
 
 
-def get_signer_from_ndnd_key(key_path: str, cert_path: Optional[str]=None) -> Ed25519Signer:
+def get_signer_from_ndnd_key(key_path: str, cert_path: Optional[str]=None) -> Sha256WithEcdsaSigner:
     with open(key_path, "r") as file:
         ndnd_key_content = file.read()
 
     key_data = parse_ndnd_key(ndnd_key_content)
-    assert key_data['sig_type'] == "Ed25519", "Unsupported signature type"
+    assert key_data['sig_type'] == "Sha256WithEcdsa", "Unsupported signature type"
 
     _, _, der_content, _ = parse_data(key_data['key_data'])
 
@@ -23,7 +23,7 @@ def get_signer_from_ndnd_key(key_path: str, cert_path: Optional[str]=None) -> Ed
     else:
         key_locator_name = key_data['name']
 
-    return Ed25519Signer(key_locator_name, der_content)
+    return Sha256WithEcdsaSigner(key_locator_name, der_content)
 
 
 def parse_ndnd_key(key_str):
