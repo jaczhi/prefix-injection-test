@@ -1,17 +1,20 @@
 from ndn.appv2 import NDNApp
-from ndn.encoding import Component, MetaInfo, Name, NonStrictName, Signer, TlvModel, UintField, make_data
+from ndn.encoding import Component, MetaInfo, Name, NonStrictName, Signer, TlvModel, BytesField, UintField, make_data
 from ndn.transport.nfd_registerer import NfdRegister
 from ndn.transport.prefix_registerer import PrefixRegisterer
 from ndn import utils, security, types
 from ndn.app_support import nfd_mgmt
 import asyncio
 import random
-from typing import Union
+from typing import Union, Optional
 
 
 class InjObjModel(TlvModel):
     expiration = UintField(0x6d)
     cost = UintField(0x6a)
+
+class StapledCertificateModel(TlvModel):
+    cert = BytesField(0x2e)
 
 
 def create_injection_object(name: NonStrictName, inj_signer: Signer,
@@ -33,7 +36,8 @@ def create_injection_object(name: NonStrictName, inj_signer: Signer,
 
 
 async def inject_prefix(app: NDNApp, name: NonStrictName, interest_signer: Signer, inj_signer: Signer,
-                        expiration: int = 24 * 3600_000, cost: int = 0) -> bool:
+                        expiration: int = 24 * 3600_000, cost: int = 0,
+                        stapled_certs: Optional[list[bytes]] = None) -> bool:
     """
     Inject a prefix (unofficial method written as an extension to python-ndn)
 
@@ -65,7 +69,14 @@ async def inject_prefix(app: NDNApp, name: NonStrictName, interest_signer: Signe
                 break
             await asyncio.sleep(0.001)
         try:
-            inj_obj = create_injection_object(name, inj_signer, expiration, cost)
+            inj_obj = bytearray(create_injection_object(name, inj_signer, expiration, cost))
+
+            if stapled_certs:
+                for cert in stapled_certs:
+                    cert_wrapper_model = StapledCertificateModel()
+                    cert_wrapper_model.cert = cert
+                    cert_wrapper = bytearray(cert_wrapper_model.encode())
+                    inj_obj.extend(cert_wrapper)
 
             _, reply, _ = await app.express(
                 name='/routing/inject',

@@ -1,6 +1,7 @@
 from ndn.encoding import Name, parse_data
 from ndn.security import Sha256WithEcdsaSigner, TpmFile, KeychainSqlite3
 from typing import Optional
+import base64
 
 
 def get_signer_from_ndnd_key(key_path: str, cert_path: Optional[str]=None) -> Sha256WithEcdsaSigner:
@@ -17,7 +18,7 @@ def get_signer_from_ndnd_key(key_path: str, cert_path: Optional[str]=None) -> Sh
             ndnd_cert_content = file.read()
 
         cert_data = parse_ndnd_cert(ndnd_cert_content)
-        assert key_data['name'] == cert_data['signer_key'], "Cert does not match key"
+        assert key_data['name'] == cert_data['name'][:-2], "Cert does not match key"
 
         key_locator_name = cert_data['name']
     else:
@@ -30,9 +31,7 @@ def parse_ndnd_key(key_str):
     """
     Parse NDN KEY string format
     Returns a dictionary with the parsed key fields
-    """
-    from ndn.encoding import Name
-    
+    """    
     # Normalize line endings and split
     key_str = key_str.replace('\r\n', '\n')
     lines = key_str.strip().split('\n')
@@ -56,7 +55,6 @@ def parse_ndnd_key(key_str):
     key_data_str = ''.join(key_data_lines)
     
     # Convert to bytes
-    import base64
     try:
         result["key_data"] = base64.b64decode(key_data_str)
     except:
@@ -101,7 +99,6 @@ def parse_ndnd_cert(cert_str):
     cert_data_str = ''.join(cert_data_lines)
     
     # Convert to bytes
-    import base64
     try:
         result["cert_data"] = base64.b64decode(cert_data_str)
     except:
