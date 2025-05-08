@@ -36,6 +36,11 @@ class NDNd_FW(Application):
             'fw': {
                 'threads': threads,
             },
+            'tables': {
+                'rib': {
+                    'readvertise_nlsr': False
+                },
+            },
         }
 
         # Write YaNFD config file

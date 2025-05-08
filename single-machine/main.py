@@ -43,7 +43,7 @@ async def prefix_inject_test(also_register: bool = True):
     await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, cost=5, stapled_certs=[cert_to_staple])
     if also_register:
         try:
-            status = app.register('/foo/bar/baz')
+            status = await app.register('/foo/bar/baz')
             print(f'Registration status: {status}')
         except Exception as e:
             print(e)
@@ -56,7 +56,7 @@ async def prefix_inject_test(also_register: bool = True):
     await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
     if also_register:
         try:
-            status = app.unregister('/foo/bar/baz')
+            status = await app.unregister('/foo/bar/baz')
             print(f'Un-registration status: {status}')
         except Exception as e:
             print(e)

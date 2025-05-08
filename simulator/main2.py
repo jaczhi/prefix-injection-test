@@ -27,7 +27,10 @@ def run() -> None:
         # set up first node as forwarder-only
         for intf in ndn.net.hosts[0].intfList():
             other_intf = intf.link.intf2 if intf.link.intf1 == intf else intf.link.intf1
-            ndn.net.hosts[0].cmd(f'ndnd fw route-add prefix=/ face=udp4://{other_intf.IP()}:6363')
+            cmd = f'ndnd fw route-add prefix=/ origin=129 face=udp4://{other_intf.IP()}:6363'
+            print(cmd)
+            cmd = ndn.net.hosts[0].cmd(cmd)
+            print(cmd)
 
         # inject on the first node
         # TODO make location pretty.
@@ -35,7 +38,7 @@ def run() -> None:
 
         ndn.net.hosts[0].cmd('(cd /root/prefix-injection-test/single-machine && python main.py &)')
 
-        time.sleep(30)
+        time.sleep(10)
 
         for i in range(1, len(ndn.net.hosts)):
             output = ndn.net.hosts[i].cmd('(cd /root/prefix-injection-test/single-machine && python consumer.py)')
