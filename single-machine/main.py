@@ -32,7 +32,7 @@ def main() -> None:
     app.run_forever(after_start=prefix_inject_test())
 
 
-async def prefix_inject_test():
+async def prefix_inject_test(also_register: bool = True):
     injection_signer = get_signer_from_ndnd_key('./personal-keys/bar.key', './personal-keys/bar.cert')
 
     with open('./personal-keys/bar.cert', 'r') as file:
@@ -41,6 +41,12 @@ async def prefix_inject_test():
     cert_to_staple = parse_ndnd_cert(bar_cert)['cert_data']
 
     await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, cost=5, stapled_certs=[cert_to_staple])
+    if also_register:
+        try:
+            status = app.register('/foo/bar/baz')
+            print(f'Registration status: {status}')
+        except Exception as e:
+            print(e)
 
     app.attach_handler('/foo/bar/baz', on_foo_interest)
 
@@ -48,6 +54,13 @@ async def prefix_inject_test():
 
     await asyncio.sleep(60)
     await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
+    if also_register:
+        try:
+            status = app.unregister('/foo/bar/baz')
+            print(f'Un-registration status: {status}')
+        except Exception as e:
+            print(e)
+
     print('Route removed')
     app.shutdown()
     print('App shutdown')
