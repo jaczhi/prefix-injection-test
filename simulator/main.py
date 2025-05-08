@@ -26,8 +26,14 @@ def run() -> None:
 
         # inject on the first node
         # TODO make location pretty.
-        output = ndn.net.hosts[0].cmd('(cd /root/prefix-injection-test/single-machine && python main.py)')
-        info(output)
+        # maybe make it an app?
+        ndn.net.hosts[0].cmd('(cd /root/prefix-injection-test/single-machine && python main.py &)')
+
+        time.sleep(30)
+
+        for i in range(1, len(ndn.net.hosts)):
+            output = ndn.net.hosts[i].cmd('(cd /root/prefix-injection-test/single-machine && python consumer.py)')
+            print(f'{ndn.net.hosts[i].name}:\n{output}\n\n')
 
         info(f'Scenario completed in: {time.time()-start:.2f}s\n')
         info(f"===================================================\n\n")

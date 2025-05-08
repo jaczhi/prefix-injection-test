@@ -46,7 +46,7 @@ async def prefix_inject_test():
 
     print('Ready and listening')
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(60)
     await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
     print('Route removed')
     app.shutdown()
