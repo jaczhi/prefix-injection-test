@@ -97,7 +97,7 @@ async def prefix_inject_test(prefix: str, key_path: str, cert_path: str, duratio
 
     app.attach_handler(prefix, on_interest_handler_factory(prefix))
 
-    print(f'Ready and listening for prefix: {prefix} on port {app.face.connection_info.port if app and app.face else "N/A"} for {duration} seconds.')
+    print(f'Ready and listening for prefix: {prefix} for {duration} seconds.')
 
     await asyncio.sleep(duration)
     await inject_prefix(app, prefix, NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
