@@ -37,7 +37,7 @@ def run() -> None:
         time.sleep(10)
 
         for i in range(1, len(ndn.net.hosts)):
-            output = ndn.net.hosts[i].cmd('(cd /root/prefix-injection-test/single-machine && python consumer.py --port 6363 --name /foo/bar/baz)')
+            output = ndn.net.hosts[i].cmd(f'(cd /root/prefix-injection-test/single-machine && python consumer.py --port 6363 --name minindn/{node_name}/foo)')
             print(f'{ndn.net.hosts[i].name}:\n{output}\n\n')
 
         info(f'Scenario completed in: {time.time()-start:.2f}s\n')
