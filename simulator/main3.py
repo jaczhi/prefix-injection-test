@@ -29,9 +29,10 @@ def run() -> None:
         # maybe make it an app?
         # amsterdam
         node_name = ndn.net.hosts[0].name
+        print('homedir', os.path.join(ndn.net.hosts[0].params['params']['homeDir']))
         key_path = os.path.join(ndn.net.hosts[0].params['params']['homeDir'], 'client-keys', f'{node_name}-client.key')
         cert_path = os.path.join(ndn.net.hosts[0].params['params']['homeDir'], 'client-keys', f'{node_name}-client.cert')
-        cmd = ndn.net.hosts[0].cmd(f'(cd /root/prefix-injection-test/single-machine && python main.py --port 6363 --prefix minindn/{node_name}/foo --duration 5 --key-path {key_path} --cert-path {cert_path})')
+        cmd = ndn.net.hosts[0].cmd(f'(cd /root/prefix-injection-test/single-machine && python main.py --port 6363 --prefix minindn/{node_name}/foo --duration 60 --key-path {key_path} --cert-path {cert_path} &)')
         print(cmd)
         time.sleep(10)
 
