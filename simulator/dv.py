@@ -13,7 +13,7 @@ class NDNd_DV(Application):
     config: str
     network: str
 
-    def __init__(self, node, network=DEFAULT_NETWORK):
+    def __init__(self, node, network=DEFAULT_NETWORK, pi_security=False):
         Application.__init__(self, node)
         self.network = network
 
@@ -26,6 +26,17 @@ class NDNd_DV(Application):
         self.init_keys()
 
         config = {
+            'dv': {
+                'network': network,
+                'router': f"{network}/{node.name}",
+                'keychain': f'dir://{self.homeDir}/dv-keys',
+                'trust_anchors': [TRUST_ROOT_NAME],
+                'neighbors': list(self.neighbors()),
+                'prefix_injection_schema': f'{TRUST_ROOT_PATH}/inject.tlv',
+                'prefix_injection_keychain': f'dir://{self.homeDir}/dv-keys',
+                'prefix_injection_trust_anchors': [TRUST_ROOT_NAME],
+            }
+        } if pi_security else {
             'dv': {
                 'network': network,
                 'router': f"{network}/{node.name}",
@@ -46,16 +57,27 @@ class NDNd_DV(Application):
     @staticmethod
     def init_trust(network=DEFAULT_NETWORK) -> None:
         global TRUST_ROOT_NAME
-        out = subprocess.check_output(f'ndnd sec keygen {network} ed25519 > {TRUST_ROOT_PATH}.key', shell=True)
+        out = subprocess.check_output(f'ndnd sec keygen {network} ecc secp256r1 > {TRUST_ROOT_PATH}.key', shell=True)
         out = subprocess.check_output(f'ndnd sec sign-cert {TRUST_ROOT_PATH}.key < {TRUST_ROOT_PATH}.key > {TRUST_ROOT_PATH}.cert', shell=True)
         out = subprocess.check_output(f'cat {TRUST_ROOT_PATH}.cert | grep "Name:" | cut -d " " -f 2', shell=True)
         TRUST_ROOT_NAME = out.decode('utf-8').strip()
 
     def init_keys(self) -> None:
         self.node.cmd(f'rm -rf dv-keys && mkdir -p dv-keys')
-        self.node.cmd(f'ndnd sec keygen {self.network}/{self.node.name}/32=DV ed25519 > dv-keys/{self.node.name}.key')
+
+        self.node.cmd(f'ndnd sec keygen {self.network}/{self.node.name}/32=DV ecc secp256r1 > dv-keys/{self.node.name}.key')
         self.node.cmd(f'ndnd sec sign-cert {TRUST_ROOT_PATH}.key < dv-keys/{self.node.name}.key > dv-keys/{self.node.name}.cert')
+
+        self.node.cmd(f'ndnd sec keygen {self.network}/{self.node.name}/inject ecc secp256r1 > dv-keys/{self.node.name}-inject.key')
+        self.node.cmd(f'ndnd sec sign-cert {TRUST_ROOT_PATH}.key < dv-keys/{self.node.name}-inject.key > dv-keys/{self.node.name}-inject.cert')
+
         self.node.cmd(f'cp {TRUST_ROOT_PATH}.cert dv-keys/')
+
+        self.node.cmd(f'rm -rf client-keys && mkdir -p client-keys')
+
+        self.node.cmd(f'ndnd sec keygen {self.network}/{self.node.name}/inject/client ecc secp256r1 > client-keys/{self.node.name}-client.key')
+        self.node.cmd(f'ndnd sec sign-cert dv-keys/{self.node.name}-inject.key < client-keys/{self.node.name}-client.key > client-keys/{self.node.name}-client.cert')
+
 
     def neighbors(self):
         for intf in self.node.intfList():
