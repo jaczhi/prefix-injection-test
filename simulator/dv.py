@@ -33,7 +33,7 @@ class NDNd_DV(Application):
                 'keychain': f'dir://{self.homeDir}/dv-keys',
                 'trust_anchors': [TRUST_ROOT_NAME],
                 'neighbors': list(self.neighbors()),
-                'prefix_injection_schema': f'{TRUST_ROOT_PATH}/inject.tlv',
+                'prefix_injection_schema': f'{TRUST_ROOT_PATH}-inject.tlv',
                 'prefix_injection_keychain': f'dir://{self.homeDir}/dv-keys',
                 'prefix_injection_trust_anchors': [TRUST_ROOT_NAME],
             }
@@ -64,7 +64,7 @@ class NDNd_DV(Application):
         TRUST_ROOT_NAME = out.decode('utf-8').strip()
 
         schema_path = os.path.join(os.getcwd(), 'inject.tlv')
-        out = subprocess.check_output(f'cp {schema_path} {TRUST_ROOT_PATH}')
+        out = subprocess.check_output(f'cp {schema_path} {TRUST_ROOT_PATH}-inject.tlv')
 
     def init_keys(self) -> None:
         self.node.cmd(f'rm -rf dv-keys && mkdir -p dv-keys')
