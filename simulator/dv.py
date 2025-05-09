@@ -64,7 +64,7 @@ class NDNd_DV(Application):
         TRUST_ROOT_NAME = out.decode('utf-8').strip()
 
         schema_path = os.path.join(os.getcwd(), 'inject.tlv')
-        out = subprocess.check_output(f'cp {schema_path} {TRUST_ROOT_PATH}-inject.tlv')
+        out = subprocess.check_output(f'cp {schema_path} {TRUST_ROOT_PATH}-inject.tlv', shell=True)
 
     def init_keys(self) -> None:
         self.node.cmd(f'rm -rf dv-keys && mkdir -p dv-keys')
