@@ -1,4 +1,5 @@
 import logging
+import argparse
 from ndn import utils, appv2, types
 from ndn import encoding as enc
 from ndn.transport.udp_face import UdpFace
@@ -10,13 +11,12 @@ logging.basicConfig(format='[{asctime}]{levelname}:{message}',
                     style='{')
 
 
-app = appv2.NDNApp(UdpFace(port=6364))
 
 
-async def main():
+async def main(name: str):
     try:
         timestamp = utils.timestamp()
-        name = enc.Name.from_str('/foo/bar/baz/')
+        name = enc.Name.from_str(name)
         print(f'Sending Interest {enc.Name.to_str(name)}, {enc.InterestParam(must_be_fresh=True, lifetime=6000)}')
         # TODO: Write a better validator
         data_name, content, pkt_context = await app.express(
@@ -39,4 +39,18 @@ async def main():
 
 
 if __name__ == '__main__':
-    app.run_forever(after_start=main())
+    parser = argparse.ArgumentParser(description='NDN Consumer')
+    parser.add_argument('--port', type=int, default=6363,
+                        help='UDP port number for the face (default: 6363)')
+    parser.add_argument(
+        '--name',
+        type=str,
+        default='/foo/bar/baz',
+        help='NDN name to consume (default: /foo/bar/baz)'
+    )
+    args = parser.parse_args()
+
+    global app
+    app = appv2.NDNApp(UdpFace(port=args.port))
+
+    app.run_forever(after_start=main(args.name))

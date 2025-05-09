@@ -2,14 +2,16 @@ import asyncio
 import os
 import signal
 import sys
+import argparse
 from typing import Optional
 from ndn.appv2 import NDNApp, ReplyFunc, PktContext
 from ndn.security import NullSigner
 from ndn.transport.udp_face import UdpFace
 from ndn.encoding import BinaryStr, FormalName, Component, Signer, Name
-from prefix_injection_client import inject_prefix
-from cert_util import get_signer_from_ndnd_key, parse_ndnd_cert
+from prefix_injection_client import inject_prefix # Assuming this is your custom module
+from cert_util import get_signer_from_ndnd_key, parse_ndnd_cert # Assuming this is your custom module
 
+app: Optional[NDNApp] = None
 
 def handle_signal(signal_num, frame) -> None:
     print()
@@ -23,52 +25,103 @@ def handle_signal(signal_num, frame) -> None:
 
 
 def main() -> None:
-    signal.signal(signal.SIGINT, handle_signal) # Ctrl+C
+    signal.signal(signal.SIGINT, handle_signal)
 
-    face = UdpFace(port=6363)
+    parser = argparse.ArgumentParser(description="NDN Application with Prefix Injection")
+    parser.add_argument(
+        '--port',
+        type=int,
+        default=6363,
+        help='UDP port number to listen on (default: 6363)'
+    )
+    parser.add_argument(
+        '--also-register',
+        action='store_true',
+        default=False,
+        help='Also register the prefix with the forwarder (default: False)'
+    )
+    parser.add_argument(
+        '--prefix',
+        type=str,
+        default='/foo/bar/baz',
+        help='NDN prefix to inject and handle (default: /foo/bar/baz)'
+    )
+    parser.add_argument(
+        '--key-path',
+        type=str,
+        default='./personal-keys/bar.key',
+        help='Path to the NDN key file (default: ./personal-keys/bar.key)'
+    )
+    parser.add_argument(
+        '--cert-path',
+        type=str,
+        default='./personal-keys/bar.cert',
+        help='Path to the NDN certificate file (default: ./personal-keys/bar.cert)'
+    )
+    parser.add_argument(
+        '--duration',
+        type=int,
+        default=60,
+        help='Duration in seconds to keep the prefix injected before removal (default: 60)'
+    )
+    args = parser.parse_args()
+
+    face = UdpFace(port=args.port)
 
     global app
     app = NDNApp(face)
-    app.run_forever(after_start=prefix_inject_test())
+    app.run_forever(after_start=prefix_inject_test(
+        prefix=args.prefix,
+        key_path=args.key_path,
+        cert_path=args.cert_path,
+        also_register=args.also_register,
+        duration=args.duration
+    ))
 
 
-async def prefix_inject_test(also_register: bool = True):
-    injection_signer = get_signer_from_ndnd_key('./personal-keys/bar.key', './personal-keys/bar.cert')
+async def prefix_inject_test(prefix: str, key_path: str, cert_path: str, duration: int, also_register: bool = False):
+    injection_signer = get_signer_from_ndnd_key(key_path, cert_path)
 
-    with open('./personal-keys/bar.cert', 'r') as file:
-        bar_cert = file.read()
+    with open(cert_path, 'r') as file:
+        bar_cert_str = file.read()
 
-    cert_to_staple = parse_ndnd_cert(bar_cert)['cert_data']
+    cert_to_staple = parse_ndnd_cert(bar_cert_str)['cert_data']
 
-    await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, cost=5, stapled_certs=[cert_to_staple])
+    await inject_prefix(app, prefix, NullSigner(), injection_signer, cost=5, stapled_certs=[cert_to_staple])
     if also_register:
         try:
-            status = await app.register('/foo/bar/baz')
-            print(f'Registration status: {status}')
+            status = await app.register(prefix)
+            print(f'Registration status for {prefix}: {status}')
         except Exception as e:
-            print(e)
+            print(f"Error registering prefix {prefix}: {e}")
 
-    app.attach_handler('/foo/bar/baz', on_foo_interest)
+    app.attach_handler(prefix, on_interest_handler_factory(prefix))
 
-    print('Ready and listening')
+    print(f'Ready and listening for prefix: {prefix} on port {app.face.connection_info.port if app and app.face else "N/A"} for {duration} seconds.')
 
-    await asyncio.sleep(60)
-    await inject_prefix(app, '/foo/bar/baz', NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
+    await asyncio.sleep(duration)
+    await inject_prefix(app, prefix, NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
     if also_register:
         try:
-            status = await app.unregister('/foo/bar/baz')
-            print(f'Un-registration status: {status}')
+            status = await app.unregister(prefix)
+            print(f'Un-registration status for {prefix}: {status}')
         except Exception as e:
-            print(e)
+            print(f"Error un-registering prefix {prefix}: {e}")
 
-    print('Route removed')
-    app.shutdown()
-    print('App shutdown')
+    print(f'Route for {prefix} removed')
+    if app:
+        app.shutdown()
+        print('App shutdown')
 
-
-def on_foo_interest(name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc, context: PktContext) -> None:
-    content = "Hello, world!".encode()
-    reply(app.make_data(name, content=content, signer=NullSigner()))
+def on_interest_handler_factory(registered_prefix: str):
+    def on_interest(name: FormalName, app_param: Optional[BinaryStr], reply: ReplyFunc, context: PktContext) -> None:
+        print(f"Received Interest for: {Name.to_str(name)} under prefix {registered_prefix}")
+        content = f"Hello from {registered_prefix}!".encode()
+        if app:
+            reply(app.make_data(name, content=content, signer=NullSigner()))
+        else:
+            print("Error: App is not initialized, cannot send Data packet.")
+    return on_interest
 
 
 if __name__ == "__main__":
