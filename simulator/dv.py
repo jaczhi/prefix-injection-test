@@ -1,3 +1,4 @@
+import os
 import json
 import subprocess
 import shutil
@@ -61,6 +62,9 @@ class NDNd_DV(Application):
         out = subprocess.check_output(f'ndnd sec sign-cert {TRUST_ROOT_PATH}.key < {TRUST_ROOT_PATH}.key > {TRUST_ROOT_PATH}.cert', shell=True)
         out = subprocess.check_output(f'cat {TRUST_ROOT_PATH}.cert | grep "Name:" | cut -d " " -f 2', shell=True)
         TRUST_ROOT_NAME = out.decode('utf-8').strip()
+
+        schema_path = os.path.join(os.getcwd(), 'inject.tlv')
+        out = subprocess.check_output(f'cp {schema_path} {TRUST_ROOT_PATH}')
 
     def init_keys(self) -> None:
         self.node.cmd(f'rm -rf dv-keys && mkdir -p dv-keys')
