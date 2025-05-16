@@ -14,21 +14,21 @@ class InjObjModel(TlvModel):
     cost = UintField(0x6a)
 
 class StapledCertificateModel(TlvModel):
-    cert = BytesField(0x2e)
+    cert = BytesField(0x216)
 
 
 def create_injection_object(name: NonStrictName, inj_signer: Signer,
                             expiration: int = 24 * 3600_000, cost: int = 0) -> Union[bytearray, memoryview]:
     name = Name.normalize(name)
 
-    inj_obj_name = name + [Component.from_str('32=inject'), Component.from_version(1)]
+    inj_obj_name = name + [Component.from_str('32=PA'), Component.from_version(1), Component.from_segment(0)]
 
     inj_obj_model = InjObjModel()
     inj_obj_model.expiration = expiration
     inj_obj_model.cost = cost
 
     inj_obj = make_data(inj_obj_name,
-                        MetaInfo(content_type=7),
+                        MetaInfo(content_type=5),
                         inj_obj_model.encode(),
                         inj_signer)
 

@@ -8,7 +8,7 @@
 #injectobject: #node/#INJECT <= #clientcert
 #injectobject: #node/#FILLER/#INJECT <= #clientcert
 
-#INJECT: "32=inject"
+#INJECT: "32=PA"
 #KEY: "KEY"/_/_/_
 #FILLER: _
 #FILLER: _/_

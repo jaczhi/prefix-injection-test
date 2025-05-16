@@ -8,5 +8,5 @@
 
 #hierarchy: #barsign <= #foosign
 
-#INJECT: "32=inject"
+#INJECT: "32=PA"
 #KEY: "KEY"/_/_/_
