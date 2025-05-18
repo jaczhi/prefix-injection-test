@@ -36,7 +36,7 @@ def run() -> None:
         # TODO make location pretty.
         # maybe make it an app?
 
-        ndn.net.hosts[0].cmd('(cd /root/prefix-injection-test/single-machine && python main.py --port 6363 --prefix /foo/bar/baz --duration 60 &)')
+        ndn.net.hosts[0].cmd('(cd /root/prefix-injection-test/single-machine && python main.py --port 6363 --prefix /foo/bar/baz --duration 60 --also-register &)')
 
         time.sleep(10)
 
