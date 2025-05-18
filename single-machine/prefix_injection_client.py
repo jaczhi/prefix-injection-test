@@ -6,6 +6,7 @@ from ndn import utils, security, types
 from ndn.app_support import nfd_mgmt
 import asyncio
 import random
+import time
 from typing import Union, Optional
 
 
@@ -21,7 +22,8 @@ def create_injection_object(name: NonStrictName, inj_signer: Signer,
                             expiration: int = 24 * 3600_000, cost: int = 0) -> Union[bytearray, memoryview]:
     name = Name.normalize(name)
 
-    inj_obj_name = name + [Component.from_str('32=PA'), Component.from_version(1), Component.from_segment(0)]
+    time_millis = int(time.time() * 1000)
+    inj_obj_name = name + [Component.from_str('32=PA'), Component.from_version(time_millis), Component.from_segment(0)]
 
     inj_obj_model = InjObjModel()
     inj_obj_model.expiration = expiration
