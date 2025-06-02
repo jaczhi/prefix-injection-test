@@ -4,9 +4,9 @@
 
 #foosign: "foo"/#KEY
 
-#injectrule: #foo/#INJECT <= #barsign
+#insertrule: #foo/#INSERT <= #barsign
 
 #hierarchy: #barsign <= #foosign
 
-#INJECT: "32=PA"
+#INSERT: "32=PA"
 #KEY: "KEY"/_/_/_

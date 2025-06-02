@@ -24,7 +24,7 @@ def run() -> None:
         dv_util.setup(ndn, pi_security=True)
         dv_util.converge(ndn.net.hosts)
 
-        # inject on the first node
+        # insert on the first node
         # TODO make location pretty.
         # maybe make it an app?
         # amsterdam
@@ -32,12 +32,12 @@ def run() -> None:
         print('homedir', os.path.join(ndn.net.hosts[0].params['params']['homeDir']))
         key_path = os.path.join(ndn.net.hosts[0].params['params']['homeDir'], 'client-keys', f'{node_name}-client.key')
         cert_path = os.path.join(ndn.net.hosts[0].params['params']['homeDir'], 'client-keys', f'{node_name}-client.cert')
-        cmd = ndn.net.hosts[0].cmd(f'(cd /root/prefix-injection-test/single-machine && python main.py --port 6363 --prefix minindn/{node_name}/foo --duration 60 --key-path {key_path} --cert-path {cert_path} &)')
+        cmd = ndn.net.hosts[0].cmd(f'(cd /root/prefix-insertion-test/single-machine && python main.py --port 6363 --prefix minindn/{node_name}/foo --duration 60 --key-path {key_path} --cert-path {cert_path} &)')
         print(cmd)
         time.sleep(10)
 
         for i in range(1, len(ndn.net.hosts)):
-            output = ndn.net.hosts[i].cmd(f'(cd /root/prefix-injection-test/single-machine && python consumer.py --port 6363 --name minindn/{node_name}/foo)')
+            output = ndn.net.hosts[i].cmd(f'(cd /root/prefix-insertion-test/single-machine && python consumer.py --port 6363 --name minindn/{node_name}/foo)')
             print(f'{ndn.net.hosts[i].name}:\n{output}\n\n')
 
         info(f'Scenario completed in: {time.time()-start:.2f}s\n')

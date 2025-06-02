@@ -10,7 +10,7 @@ import time
 from typing import Union, Optional
 
 
-class InjObjModel(TlvModel):
+class InsObjModel(TlvModel):
     expiration = UintField(0x6d)
     cost = UintField(0x6a)
 
@@ -18,30 +18,30 @@ class StapledCertificateModel(TlvModel):
     cert = BytesField(0x216)
 
 
-def create_injection_object(name: NonStrictName, inj_signer: Signer,
+def create_insertion_object(name: NonStrictName, ins_signer: Signer,
                             expiration: int = 24 * 3600_000, cost: int = 0) -> Union[bytearray, memoryview]:
     name = Name.normalize(name)
 
     time_millis = int(time.time() * 1000)
-    inj_obj_name = name + [Component.from_str('32=PA'), Component.from_version(time_millis), Component.from_segment(0)]
+    ins_obj_name = name + [Component.from_str('32=PA'), Component.from_version(time_millis), Component.from_segment(0)]
 
-    inj_obj_model = InjObjModel()
-    inj_obj_model.expiration = expiration
-    inj_obj_model.cost = cost
+    ins_obj_model = InsObjModel()
+    ins_obj_model.expiration = expiration
+    ins_obj_model.cost = cost
 
-    inj_obj = make_data(inj_obj_name,
+    ins_obj = make_data(ins_obj_name,
                         MetaInfo(content_type=5),
-                        inj_obj_model.encode(),
-                        inj_signer)
+                        ins_obj_model.encode(),
+                        ins_signer)
 
-    return inj_obj
+    return ins_obj
 
 
-async def inject_prefix(app: NDNApp, name: NonStrictName, interest_signer: Signer, inj_signer: Signer,
+async def insert_prefix(app: NDNApp, name: NonStrictName, interest_signer: Signer, ins_signer: Signer,
                         expiration: int = 24 * 3600_000, cost: int = 0,
                         stapled_certs: Optional[list[bytes]] = None) -> bool:
     """
-    Inject a prefix (unofficial method written as an extension to python-ndn)
+    Insert a prefix (unofficial method written as an extension to python-ndn)
 
     Parameter usage similar to register_prefix.
 
@@ -71,27 +71,27 @@ async def inject_prefix(app: NDNApp, name: NonStrictName, interest_signer: Signe
                 break
             await asyncio.sleep(0.001)
         try:
-            inj_obj = bytearray(create_injection_object(name, inj_signer, expiration, cost))
+            ins_obj = bytearray(create_insertion_object(name, ins_signer, expiration, cost))
 
             if stapled_certs:
                 for cert in stapled_certs:
                     cert_wrapper_model = StapledCertificateModel()
                     cert_wrapper_model.cert = cert
                     cert_wrapper = bytearray(cert_wrapper_model.encode())
-                    inj_obj.extend(cert_wrapper)
+                    ins_obj.extend(cert_wrapper)
 
             _, reply, _ = await app.express(
-                name='/routing/inject',
-                app_param=inj_obj, signer=interest_signer,
+                name='/routing/insert',
+                app_param=ins_obj, signer=interest_signer,
                 validator=pass_all,
                 lifetime=1000)
             ret = nfd_mgmt.parse_response(reply)
             if ret['status_code'] != 200:
-                print(f'Injection for {Name.to_str(name)} failed: {ret["status_code"]} {ret["status_text"]}', flush=True)
+                print(f'Insertion for {Name.to_str(name)} failed: {ret["status_code"]} {ret["status_text"]}', flush=True)
                 return False
             else:
-                print(f'Injection for {Name.to_str(name)} succeeded: {ret["status_code"]} {ret["status_text"]}', flush=True)
+                print(f'Insertion for {Name.to_str(name)} succeeded: {ret["status_code"]} {ret["status_text"]}', flush=True)
                 return True
         except (types.InterestNack, types.InterestTimeout, types.InterestCanceled, types.ValidationFailure) as e:
-            print(f'Injection for {Name.to_str(name)} failed: {e.__class__.__name__}', flush=True)
+            print(f'Insertion for {Name.to_str(name)} failed: {e.__class__.__name__}', flush=True)
             return False

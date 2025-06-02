@@ -8,7 +8,7 @@ from ndn.appv2 import NDNApp, ReplyFunc, PktContext
 from ndn.security import NullSigner
 from ndn.transport.udp_face import UdpFace
 from ndn.encoding import BinaryStr, FormalName, Component, Signer, Name
-from prefix_injection_client import inject_prefix # Assuming this is your custom module
+from prefix_insertion_client import insert_prefix # Assuming this is your custom module
 from cert_util import get_signer_from_ndnd_key, parse_ndnd_cert # Assuming this is your custom module
 
 app: Optional[NDNApp] = None
@@ -27,7 +27,7 @@ def handle_signal(signal_num, frame) -> None:
 def main() -> None:
     signal.signal(signal.SIGINT, handle_signal)
 
-    parser = argparse.ArgumentParser(description="NDN Application with Prefix Injection")
+    parser = argparse.ArgumentParser(description="NDN Application with Prefix Insertion")
     parser.add_argument(
         '--port',
         type=int,
@@ -44,7 +44,7 @@ def main() -> None:
         '--prefix',
         type=str,
         default='/foo/bar/baz',
-        help='NDN prefix to inject and handle (default: /foo/bar/baz)'
+        help='NDN prefix to insert and handle (default: /foo/bar/baz)'
     )
     parser.add_argument(
         '--key-path',
@@ -62,7 +62,7 @@ def main() -> None:
         '--duration',
         type=int,
         default=60,
-        help='Duration in seconds to keep the prefix injected before removal (default: 60)'
+        help='Duration in seconds to keep the prefix inserted before removal (default: 60)'
     )
     args = parser.parse_args()
 
@@ -70,7 +70,7 @@ def main() -> None:
 
     global app
     app = NDNApp(face)
-    app.run_forever(after_start=prefix_inject_test(
+    app.run_forever(after_start=prefix_insert_test(
         prefix=args.prefix,
         key_path=args.key_path,
         cert_path=args.cert_path,
@@ -79,15 +79,15 @@ def main() -> None:
     ))
 
 
-async def prefix_inject_test(prefix: str, key_path: str, cert_path: str, duration: int, also_register: bool = False):
-    injection_signer = get_signer_from_ndnd_key(key_path, cert_path)
+async def prefix_insert_test(prefix: str, key_path: str, cert_path: str, duration: int, also_register: bool = False):
+    insertion_signer = get_signer_from_ndnd_key(key_path, cert_path)
 
     with open(cert_path, 'r') as file:
         bar_cert_str = file.read()
 
     cert_to_staple = parse_ndnd_cert(bar_cert_str)['cert_data']
 
-    await inject_prefix(app, prefix, NullSigner(), injection_signer, cost=5, stapled_certs=[cert_to_staple])
+    await insert_prefix(app, prefix, NullSigner(), insertion_signer, cost=5, stapled_certs=[cert_to_staple])
     if also_register:
         try:
             status = await app.register(prefix)
@@ -100,7 +100,7 @@ async def prefix_inject_test(prefix: str, key_path: str, cert_path: str, duratio
     print(f'Ready and listening for prefix: {prefix} for {duration} seconds.')
 
     await asyncio.sleep(duration)
-    await inject_prefix(app, prefix, NullSigner(), injection_signer, expiration=0, stapled_certs=[cert_to_staple])
+    await insert_prefix(app, prefix, NullSigner(), insertion_signer, expiration=0, stapled_certs=[cert_to_staple])
     if also_register:
         try:
             status = await app.unregister(prefix)

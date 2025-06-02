@@ -1,0 +1,18 @@
+#network: network & { network: "minindn" }
+#node: #network/node
+
+#rootcert: #network/#KEY
+#nodecert: #node/"insert"/#KEY <= #rootcert
+#clientcert: #node/"insert"/"client"/#KEY <= #nodecert
+
+#insertobject: #node/#INSERT <= #clientcert
+#insertobject: #node/#FILLER/#INSERT <= #clientcert
+
+#INSERT: "32=PA"
+#KEY: "KEY"/_/_/_
+#FILLER: _
+#FILLER: _/_
+#FILLER: _/_/_
+#FILLER: _/_/_/_
+#FILLER: _/_/_/_/_
+#FILLER: _/_/_/_/_/_
